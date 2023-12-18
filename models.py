@@ -1,0 +1,22 @@
+from typing import Optional
+
+from sqlalchemy import Integer, String, ForeignKey
+from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import mapped_column
+
+from database import Base
+
+
+# https://docs.sqlalchemy.org/en/20/orm/mapping_styles.html
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    login: Mapped[str] = mapped_column(String(30), unique=True, index=True)
+    password: Mapped[str]
+    nickname: Mapped[Optional[str]]
+    is_active: Mapped[bool] = mapped_column(default=True)
+
+    def __repr__(self) -> str:
+        return f'User {self.name} -> #{self.id}'
