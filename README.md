@@ -8,4 +8,5 @@ poetry install
 poetry add asyncpg
 poetry add psycopg2
 poetry add psycopg2-binary
+poetry add "fastapi[all]"  
 
