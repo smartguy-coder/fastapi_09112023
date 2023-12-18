@@ -15,3 +15,6 @@ class Settings:
     def DATABASE_URL(self) -> str:
         return f'postgres+asyncpg://{self.DATABASE_USER}:{self.DATABASE_PASSWORD}@' \
                f'{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}'
+
+
+settings = Settings()
