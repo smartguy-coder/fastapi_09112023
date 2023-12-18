@@ -17,6 +17,8 @@ class User(Base):
     password: Mapped[str]
     nickname: Mapped[Optional[str]]
     is_active: Mapped[bool] = mapped_column(default=True)
+    age: Mapped[int]
+    money: Mapped[int] = mapped_column(default=0)
 
     def __repr__(self) -> str:
         return f'User {self.name} -> #{self.id}'
