@@ -10,4 +10,8 @@ poetry add psycopg2
 poetry add psycopg2-binary
 poetry add "fastapi[all]"  
  alembic init migrations
+alembic revision --autogenerate -m 'initial'
+alembic upgrade head 
+ alembic downgrade -1
+
 
