@@ -12,6 +12,8 @@ poetry add "fastapi[all]"
  alembic init migrations
 alembic revision --autogenerate -m 'initial'
 alembic upgrade head 
+alembic upgrade 2d8bb3d81f97 
  alembic downgrade -1
+
 
 
