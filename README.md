@@ -17,3 +17,4 @@ alembic upgrade 2d8bb3d81f97
 
 
 
+uvicorn main:app  --port 5678 --reload
