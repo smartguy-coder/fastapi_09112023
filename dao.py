@@ -34,6 +34,28 @@ async def get_user_by_email(email: str, session: AsyncSession) -> User | None:
     result = await session.execute(query)
     return result.scalar_one_or_none()
 
+
+async def get_user_by_uuid(user_uuid: str, session: AsyncSession) -> User | None:
+    query = select(User).filter_by(user_uuid=user_uuid)
+    result = await session.execute(query)
+    return result.scalar_one_or_none()
+
+
+async def activate_user_account(user_uuid: str, session: AsyncSession) -> User | None:
+    user = await get_user_by_uuid(user_uuid, session)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Data for account activation is not correct"
+        )
+    if user.verified_at:
+        return user
+
+    user.verified_at = True
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+    return user
 # async def fetch_users(skip: int = 0, limit: int = 10) -> list[User]:
 #     async with async_session_maker() as session:
 #         query = select(User).offset(skip).limit(limit)

@@ -2,11 +2,12 @@ from fastapi import FastAPI, Query
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
-from api import api_router_user
+from api import api_router_user, general_routers
 
 app = FastAPI()
 
 app.include_router(api_router_user.router)
+app.include_router(general_routers.router)
 
 
 # @app.get('/')
