@@ -26,5 +26,17 @@ class User(BaseInfoMixin, Base):
     is_active: Mapped[bool] = mapped_column(default=True)
     verified_at: Mapped[bool] = mapped_column(default=False)
 
+    tokens = relationship('UserRefreshToken', back_populates='user')
+
     def __repr__(self) -> str:
         return f'User {self.name} -> #{self.id}'
+
+
+class UserRefreshToken(BaseInfoMixin, Base):
+    __tablename__ = 'refresh_tokens'
+
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    refresh_key: Mapped[str]
+    expires_at: Mapped[datetime]
+
+    user = relationship('User', back_populates='tokens')
