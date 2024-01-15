@@ -2,10 +2,11 @@ import uuid
 from datetime import timedelta, datetime
 
 import jwt
-from fastapi import HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import HTTPException, status, Depends
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
+from database import get_async_session
 
 from api.schemas_user import LoginResponse
 import dao
@@ -55,6 +56,16 @@ class AuthHandler:
         return token_
 
     @classmethod
+    async def decode_token(cls, token: str) -> dict:
+        try:
+            payload = jwt.decode(token, cls.secret, [cls.algorithm])
+            return payload
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Time is out')
+        except jwt.InvalidTokenError:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid token')
+
+    @classmethod
     async def generate_token_pair(cls, user: User, session: AsyncSession) -> LoginResponse:
         access_token_payload = {
             'sub': user.id,
@@ -66,8 +77,46 @@ class AuthHandler:
         refresh_token_payload = {
             'sub': user.id,
             'email': user.email,
-            'db': str(uuid.uuid4()),
+            'key': str(uuid.uuid4()),
         }
         refresh_token_expires = timedelta(minutes=settings.REFRESH_TOKEN_TIME_MINUTES)
         refresh_token = await cls.generate_token(refresh_token_payload, refresh_token_expires)
+        await dao.create_refresh_token(
+            user_id=user.id,
+            refresh_key=refresh_token_payload['key'],
+            expires_at=datetime.utcnow() + refresh_token_expires,
+            session=session,
+        )
+        return LoginResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_at=access_token_expires.seconds,
+        )
 
+    @classmethod
+    async def get_refresh_token(cls, refresh_token: str, session: AsyncSession) -> LoginResponse:
+        payload = await cls.decode_token(refresh_token)
+
+        refresh_token_key = payload.get('key')
+        user_token = await dao.get_refresh_token_by_key(refresh_token_key, session)
+        if not user_token:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid token')
+        user_token.expires_at = datetime.utcnow()
+        session.add(user_token)
+        await session.commit()
+        token_pair = await cls.generate_token_pair(user_token.user, session)
+        return token_pair
+
+
+class SecurityHandler:
+    oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/auth/login')
+
+    @classmethod
+    async def get_current_user(
+        cls, token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_async_session)
+    ):
+        payload = await AuthHandler.decode_token(token)
+        user = await dao.get_user_by_email(email=payload.get('email'), session=session)
+        if user:
+            return user
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User unknown')

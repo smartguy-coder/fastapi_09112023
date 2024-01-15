@@ -1,4 +1,5 @@
 from pydantic import Field, BaseModel, EmailStr
+from datetime import timedelta
 
 
 class BaseFields(BaseModel):
@@ -17,5 +18,5 @@ class RegisterUserRequest(PasswordField, BaseFields):
 class LoginResponse(BaseModel):
     access_token: str
     refresh_token: str
-    expires_at: str
+    expires_at: int
     token_type: str = 'Bearer'

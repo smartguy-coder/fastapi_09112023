@@ -3,8 +3,11 @@ from sqlalchemy import insert, select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
+from sqlalchemy.orm import joinedload
+
 from models import User, UserRefreshToken
 from database import async_session_maker
+from datetime import datetime
 
 
 async def create_user(
@@ -95,19 +98,28 @@ async def activate_user_account(user_uuid: str, session: AsyncSession) -> User |
 
 
 async def create_refresh_token(
-        name: str,
-        email: str,
-        hashed_password: str,
+        user_id: int,
+        refresh_key: str,
+        expires_at: datetime,
         session: AsyncSession,
 ) -> None:
-    # user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
-    # refresh_key: Mapped[str]
-    # expires_at:
     token = UserRefreshToken(
-        email=email,
-        name=name,
-        hashed_password=hashed_password,
+        user_id=user_id,
+        refresh_key=refresh_key,
+        expires_at=expires_at,
     )
     session.add(token)
     await session.commit()
 
+
+async def get_refresh_token_by_key(key: str, session: AsyncSession) -> UserRefreshToken | None:
+    user_token = await session.execute(
+        select(UserRefreshToken)
+        .options(joinedload(UserRefreshToken.user))
+        .where(
+            UserRefreshToken.refresh_key == key,
+            UserRefreshToken.expires_at > datetime.utcnow(),
+        )
+    )
+
+    return user_token.scalar_one_or_none()
