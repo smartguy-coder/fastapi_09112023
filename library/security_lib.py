@@ -69,3 +69,5 @@ class AuthHandler:
             'db': str(uuid.uuid4()),
         }
         refresh_token_expires = timedelta(minutes=settings.REFRESH_TOKEN_TIME_MINUTES)
+        refresh_token = await cls.generate_token(refresh_token_payload, refresh_token_expires)
+
