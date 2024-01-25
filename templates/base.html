@@ -46,14 +46,14 @@
             {% if user %}
               <li class="nav-item m-2">Вітаємо тебе, {{ user.name }}</li>
               <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="#">Розлогуватися</a>
+                <a class="nav-link active" aria-current="page" href="{{ url_for('user_logout_web') }}">Розлогуватися</a>
               </li>
             {% else %}
               <li class="nav-item">
                 <a class="nav-link active" aria-current="page" href="{{ url_for('web_register') }}">Зареєструватися</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="#">Ввійти</a>
+                <a class="nav-link active" aria-current="page" href="{{ url_for('user_login_web') }}">Ввійти</a>
               </li>
             {% endif %}
           </ul>

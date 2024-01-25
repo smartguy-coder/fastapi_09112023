@@ -3,10 +3,6 @@
 
 {% block content %}
 
-    {{ my_list }}
-    {{ my_list[0] }}
-    {{ my_list.0 }}
-
     <ul class="list-group">
         {% for element in my_list %}
            <li class="list-group-item">{{ element }}</li>
@@ -18,7 +14,6 @@
         {{ user.age }}
     {%endif %}
 
-    {{ request }}
 
 {% endblock %}
 

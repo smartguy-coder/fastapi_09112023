@@ -2,7 +2,7 @@ import uuid
 from datetime import timedelta, datetime
 
 import jwt
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status, Depends, Request
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,6 +66,14 @@ class AuthHandler:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid token')
 
     @classmethod
+    async def decode_token_web(cls, token: str) -> dict:
+        try:
+            payload = jwt.decode(token, cls.secret, [cls.algorithm])
+            return payload
+        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+            return {}
+
+    @classmethod
     async def generate_token_pair(cls, user: User, session: AsyncSession) -> LoginResponse:
         access_token_payload = {
             'sub': user.id,
@@ -120,3 +128,33 @@ class SecurityHandler:
         if user:
             return user
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User unknown')
+
+    @classmethod
+    async def get_current_user_web(
+        cls, request: Request, session: AsyncSession = Depends(get_async_session)
+    ):
+        token = request.cookies.get('token') or ''
+        payload = await AuthHandler.decode_token_web(token)
+        user = await dao.get_user_by_email(email=payload.get('email'), session=session)
+        return user
+
+    @classmethod
+    async def set_cookies_web(cls, user, response):
+        if not user:
+            return response
+
+        access_token_payload = {
+            'sub': user.id,
+            'email': user.email,
+        }
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_TIME_MINUTES)
+        token = await AuthHandler.generate_token(payload=access_token_payload, expiry=access_token_expires)
+        response.set_cookie(key='token', value=token, httponly=True)
+
+        return response
+
+    @classmethod
+    async def authenticate_user_web(cls, email, password, session: AsyncSession):
+        user = await dao.get_user_by_email(email, session)
+        is_password_correct = await PasswordEncrypt.verify_password(password, user.hashed_password) if user else False
+        return user, is_password_correct
