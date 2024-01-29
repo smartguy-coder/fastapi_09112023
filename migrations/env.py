@@ -5,7 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from models import User, UserRefreshToken
+from models import User, UserRefreshToken, Product
 from database import Base
 from settings import settings
 

@@ -18,7 +18,7 @@ class Settings:
     JWT_SECRET = os.getenv('JWT_SECRET', '')
     JWT_ALGORITHM = os.getenv('JWT_ALGORITHM', '')
     REFRESH_TOKEN_TIME_MINUTES = 60 * 24  # one day
-    ACCESS_TOKEN_TIME_MINUTES = 5
+    ACCESS_TOKEN_TIME_MINUTES = 50
 
     @property
     def DATABASE_URL(self) -> str:

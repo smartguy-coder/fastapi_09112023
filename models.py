@@ -25,6 +25,7 @@ class User(BaseInfoMixin, Base):
     user_uuid: Mapped[uuid.UUID] = mapped_column(default=uuid.uuid4)
     is_active: Mapped[bool] = mapped_column(default=True)
     verified_at: Mapped[bool] = mapped_column(default=False)
+    is_admin: Mapped[bool] = mapped_column(default=False, nullable=True)
 
     tokens = relationship('UserRefreshToken', back_populates='user')
 
@@ -40,3 +41,12 @@ class UserRefreshToken(BaseInfoMixin, Base):
     expires_at: Mapped[datetime]
 
     user = relationship('User', back_populates='tokens')
+
+
+class Product(BaseInfoMixin, Base):
+    __tablename__ = 'products'
+
+    title: Mapped[str]
+    price: Mapped[float]
+    image_url: Mapped[str] = mapped_column(default='', nullable=True)
+    image_file: Mapped[str] = mapped_column(default='', nullable=True)

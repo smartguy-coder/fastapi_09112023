@@ -27,7 +27,9 @@
                 Dropdown
               </a>
               <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Action</a></li>
+                {% if user and user.is_admin %}
+                <li><a class="dropdown-item" href="{{ url_for('add_product') }}">Add products</a></li>
+                {% endif %}
                 <li><a class="dropdown-item" href="#">Another action</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="#">Something else here</a></li>

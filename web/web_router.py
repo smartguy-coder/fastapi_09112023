@@ -1,10 +1,12 @@
+import uuid
 from datetime import timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks
+from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks, UploadFile, File
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from pydantic import EmailStr
+from fastapi.responses import FileResponse
 
 from database import get_async_session
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -63,9 +65,20 @@ class UserCreateForm:
 
 @web_router.get('/')
 async def index(request: Request, user=Depends(SecurityHandler.get_current_user_web)):
+    products = [
+        {'title': 'new title', 'price': 60, 'image_url': '', 'image_file': 'efd5dd97-30a3-422b-893e-4135bbed1af0.jpg'},
+        {'title': 'new title', 'price': 60, 'image_url': 'https://images.silpo.ua/products/500x500/webp/e0bded90-5ab1-42ca-b0fc-771b1a07843c.png', 'image_file': 'efd5dd97-30a3-422b-893e-4135bbed1af0.jpg'},
+        {'title': 'new title', 'price': 60, 'image_url': 'https://images.silpo.ua/products/500x500/webp/e0bded90-5ab1-42ca-b0fc-771b1a07843c.png', 'image_file': 'efd5dd97-30a3-422b-893e-4135bbed1af0.jpg'},
+        {'title': 'new title', 'price': 60, 'image_url': 'https://images.silpo.ua/products/500x500/webp/e0bded90-5ab1-42ca-b0fc-771b1a07843c.png', 'image_file': 'efd5dd97-30a3-422b-893e-4135bbed1af0.jpg'},
+        {'title': 'new title', 'price': 60, 'image_url': 'https://images.silpo.ua/products/500x500/webp/e0bded90-5ab1-42ca-b0fc-771b1a07843c.png', 'image_file': 'efd5dd97-30a3-422b-893e-4135bbed1af0.jpg'},
+    ]
+
+
+
     context = {
         'request': request,
         'user': user,
+        'products': products,
     }
 
     response = templates.TemplateResponse('index.html', context=context)
@@ -138,3 +151,63 @@ async def user_logout_web(request: Request):
     response = templates.TemplateResponse('login.html', context={'request': request})
     response.delete_cookie(key='token')
     return response
+
+
+@web_router.get('/add-product', description='add-product')
+async def add_product(request: Request, user=Depends(SecurityHandler.get_current_user_web)):
+    if not user or not user.is_admin:
+        response = templates.TemplateResponse('login.html', context={'request': request})
+        response.delete_cookie(key='token')
+        return response
+
+    context = {
+        'request': request,
+        'user': user,
+    }
+    response = templates.TemplateResponse('add-product.html', context=context)
+    return await SecurityHandler.set_cookies_web(user, response)
+
+
+@web_router.post('/add-product', description='add-product')
+async def add_product_post(
+        request: Request,
+        user=Depends(SecurityHandler.get_current_user_web),
+        title: str = Form(),
+        price: float = Form(),
+        image_url: str = Form(None),
+        image_file: UploadFile = File(None),
+        session: AsyncSession = Depends(get_async_session),
+):
+    if not user or not user.is_admin:
+        response = templates.TemplateResponse('login.html', context={'request': request})
+        response.delete_cookie(key='token')
+        return response
+
+    saved_file_name = ''
+    if image_file:
+        extention = image_file.filename.split(".")[-1]
+        if extention in {'jpg', 'png', 'jpeg'}:
+            saved_file_name = f'{uuid.uuid4()}.{extention}'
+            with open(f'static/product_images/{saved_file_name}', 'wb') as prod_file:
+                prod_file.write(await image_file.read())
+
+    await dao.add_product(
+        title=title,
+        price=price,
+        image_url=image_url,
+        image_file=saved_file_name,
+        session=session,
+    )
+
+    context = {
+        'request': request,
+        'user': user,
+    }
+    response = templates.TemplateResponse('index.html', context=context)
+    return await SecurityHandler.set_cookies_web(user, response)
+
+
+@web_router.get('/file/{filename}')
+async def download_file(filename: str):
+    return FileResponse(path=f'static/product_images/{filename}', filename=f'123{filename}',
+                        media_type='multipart/form-data')

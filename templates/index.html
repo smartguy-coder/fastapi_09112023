@@ -3,17 +3,34 @@
 
 {% block content %}
 
-    <ul class="list-group">
-        {% for element in my_list %}
-           <li class="list-group-item">{{ element }}</li>
+<div class="container text-center">
+  <div class="row row-cols-2 row-cols-lg-5 g-2 g-lg-3">
+
+
+        {% for product in products %}
+           <div class="card m-2" style="width: 18rem;">
+              <img src="
+              {% if product.image_url %}
+              {{ product.image_url }}
+              {% elif product.image_file %}
+
+                {{ url_for('static', path=product.image_file) }}
+
+              {% else %}
+
+              https://boschbrandstore.com/wp-content/uploads/2019/01/no-image.png
+              {%endif %}
+
+                " class="card-img-top" alt="...">
+              <div class="card-body">
+                <h5 class="card-title">{{ product.title }}</h5>
+                <p class="card-text">price is {{product.price}}</p>
+                <a href="#" class="btn btn-primary">Go somewhere</a>
+              </div>
+            </div>
         {% endfor %}
-    </ul>
 
-    {%if user%}
-        {{ user.name }}
-        {{ user.age }}
-    {%endif %}
-
-
+  </div>
+</div>
 {% endblock %}
 

@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 from sqlalchemy.orm import joinedload
 
-from models import User, UserRefreshToken
+from models import User, UserRefreshToken, Product
 from database import async_session_maker
 from datetime import datetime
 
@@ -59,6 +59,8 @@ async def activate_user_account(user_uuid: str, session: AsyncSession) -> User |
     await session.commit()
     await session.refresh(user)
     return user
+
+
 # async def fetch_users(skip: int = 0, limit: int = 10) -> list[User]:
 #     async with async_session_maker() as session:
 #         query = select(User).offset(skip).limit(limit)
@@ -123,3 +125,26 @@ async def get_refresh_token_by_key(key: str, session: AsyncSession) -> UserRefre
     )
 
     return user_token.scalar_one_or_none()
+
+
+async def add_product(
+        title: str,
+        price: float,
+        session: AsyncSession,
+        image_url: str = '',
+        image_file: str = '',
+) -> Product | None:
+    product = Product(
+        title=title,
+        price=price,
+        image_url=image_url,
+        image_file=image_file
+    )
+    session.add(product)
+    try:
+        await session.commit()
+        await session.refresh(product)
+        return product
+    except IntegrityError:
+        await session.rollback()
+        return None
