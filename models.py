@@ -56,7 +56,7 @@ class Product(BaseInfoMixin, Base):
     products = relationship('OrderProduct', back_populates='product')
 
     def __str__(self):
-        return f'{self.title} - #{self.id}'
+        return f'Product {self.title} - #{self.id}'
 
 class Order(BaseInfoMixin, Base):
     __tablename__ = 'orders'
@@ -76,3 +76,8 @@ class OrderProduct(BaseInfoMixin, Base):
     quantity: Mapped[int] = mapped_column(default=0)
 
     product = relationship('Product', back_populates='products')
+
+    def __str__(self):
+        return f'OrderProduct {self.product.title} - #{self.id}, {self.quantity} >> {self.price} = {self.quantity * self.price}'
+
+    __repr__ = __str__

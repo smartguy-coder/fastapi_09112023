@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 from sqlalchemy.orm import joinedload
 
-from models import User, UserRefreshToken, Product
+from models import User, UserRefreshToken, Product, OrderProduct
 from database import async_session_maker
 from datetime import datetime
 
@@ -151,7 +151,10 @@ async def add_product(
 
 
 async def fetch_products(session: AsyncSession, offset=0, limit=12, q='') -> list:
-    query = select(Product).offset(offset).limit(limit)
+    if q:
+        query = select(Product).filter(Product.title.ilike(f'%{q}%')).offset(offset).limit(limit)
+    else:
+        query = select(Product).offset(offset).limit(limit)
     result = await session.execute(query)
     return result.scalars().all() or []
 
@@ -160,3 +163,22 @@ async def get_product(session: AsyncSession, product_id: int) -> Product | None:
     query = select(Product).filter(Product.id==product_id)
     result = await session.execute(query)
     return result.scalar_one_or_none()
+
+
+async def get_or_create(session: AsyncSession, model, only_get=False, **kwargs):
+    query = select(model).filter_by(**kwargs)
+    instance = await session.execute(query)
+    instance = instance.scalar_one_or_none()
+    if instance or only_get:
+        return instance
+    instance = model(**kwargs)
+    session.add(instance)
+    await session.commit()
+    await session.refresh(instance)
+    return instance
+
+
+async def fetch_order_products(session: AsyncSession, order_id: int) -> list:
+    query = select(OrderProduct).filter(OrderProduct.order_id==order_id).options(joinedload(OrderProduct.product))
+    result = await session.execute(query)
+    return result.scalars().all() or []
