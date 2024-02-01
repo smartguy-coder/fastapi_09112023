@@ -65,26 +65,6 @@ class UserCreateForm:
         return False
 
 
-@web_router.get('/')
-@web_router.post('/')
-async def index(request: Request, search: str = Form(None), user=Depends(SecurityHandler.get_current_user_web),
-                session: AsyncSession = Depends(get_async_session)):
-    print(search, 8888888888888888888)
-    cart = []
-    if user:
-        order = await dao.get_or_create(session=session, model=Order, user_id=user.id, is_closed=False)
-        cart = await dao.fetch_order_products(session, order.id)
-
-    products = await dao.fetch_products(session, q=search)
-    context = {
-        'request': request,
-        'user': user,
-        'products': products,
-        'cart': cart,
-    }
-
-    response = templates.TemplateResponse('index.html', context=context)
-    return await SecurityHandler.set_cookies_web(user, response)
 
 
 
@@ -265,4 +245,28 @@ async def add_product(product_id: int, request: Request,
 
     redirect_url = request.url_for('index')
     response = RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
+    return await SecurityHandler.set_cookies_web(user, response)
+
+
+
+@web_router.get('/')
+@web_router.get('/{query}')
+@web_router.post('/')
+async def index(request: Request, query: str = None, search: str = Form(None), user=Depends(SecurityHandler.get_current_user_web),
+                session: AsyncSession = Depends(get_async_session)):
+    cart = []
+    if user:
+        order = await dao.get_or_create(session=session, model=Order, user_id=user.id, is_closed=False)
+        cart = await dao.fetch_order_products(session, order.id)
+
+    products = await dao.fetch_products(session, q=search or query)
+    context = {
+        'request': request,
+        'user': user,
+        'products': products,
+        'cart': cart,
+        'brands': ['Nike', 'Adidas']
+    }
+
+    response = templates.TemplateResponse('index.html', context=context)
     return await SecurityHandler.set_cookies_web(user, response)
