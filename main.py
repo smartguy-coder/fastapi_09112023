@@ -13,6 +13,7 @@ sentry_sdk.init(
 app = FastAPI()
 
 app.mount('/static', StaticFiles(directory='static'), name='static')
+app.mount('/static/product_images', StaticFiles(directory='static/product_images'), name='product_images')
 
 app.include_router(api_router_user.router)
 app.include_router(general_routers.router_public)

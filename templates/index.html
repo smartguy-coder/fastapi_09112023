@@ -14,7 +14,7 @@
               {{ product.image_url }}
               {% elif product.image_file %}
 
-                {{ url_for('static', path=product.image_file) }}
+                {{ url_for('product_images', path=product.image_file) }}
 
               {% else %}
 
@@ -25,7 +25,9 @@
               <div class="card-body">
                 <h5 class="card-title">{{ product.title }}</h5>
                 <p class="card-text">price is {{product.price}}</p>
-                <a href="#" class="btn btn-primary">Go somewhere</a>
+                  <form action="{{ url_for('add_product', product_id=product.id) }}" method="post">
+                    <button type="submit" class="btn btn-success">Add to the cart</button>
+                  </form>
               </div>
             </div>
         {% endfor %}

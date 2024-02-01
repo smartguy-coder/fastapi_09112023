@@ -148,3 +148,15 @@ async def add_product(
     except IntegrityError:
         await session.rollback()
         return None
+
+
+async def fetch_products(session: AsyncSession, offset=0, limit=12, q='') -> list:
+    query = select(Product).offset(offset).limit(limit)
+    result = await session.execute(query)
+    return result.scalars().all() or []
+
+
+async def get_product(session: AsyncSession, product_id: int) -> Product | None:
+    query = select(Product).filter(Product.id==product_id)
+    result = await session.execute(query)
+    return result.scalar_one_or_none()
