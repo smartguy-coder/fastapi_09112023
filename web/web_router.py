@@ -265,7 +265,7 @@ async def index(request: Request, query: str = None, search: str = Form(None), u
         'user': user,
         'products': products,
         'cart': cart,
-        'brands': ['Nike', 'Adidas']
+        'brands': ['Nike', 'Adidas', 'something new']
     }
 
     response = templates.TemplateResponse('index.html', context=context)
